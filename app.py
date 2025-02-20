@@ -1,4 +1,4 @@
-from dash import Dash, html, dcc, Input, Output, State, dash_table
+from dash import Dash, html, dcc, Input, Output, State, dash_table, set_props, no_update
 import dash_bootstrap_components as dbc
 import sqlite3
 
@@ -42,7 +42,7 @@ def calculate_elo(winner, loser, score_w, score_l):
     expected_l = expected_score(loser_elo, winner_elo)
     
     # Calcul du multiplicateur basé sur l'écart de score, avec une valeur minimale de 1
-    margin_multiplier = max((score_w - score_l) / 10, 1)
+    margin_multiplier = max((score_w - score_l) / 10)
     
     # Déterminer K pour chaque joueur
     K_w = get_k_factor(winner_games_played)
@@ -53,15 +53,19 @@ def calculate_elo(winner, loser, score_w, score_l):
     new_R_l = loser_elo + round(K_l * margin_multiplier * (0 - expected_l))
     
     # Mise à jour des ELOs et du nombre de parties jouées
-    conn.execute('UPDATE players SET elo = ?, n_games_played = n_games_played + 1 WHERE player_name = ?', 
-                 (max(new_R_w, 1), winner))
-    conn.execute('UPDATE players SET elo = ?, n_games_played = n_games_played + 1 WHERE player_name = ?', 
-                 (max(new_R_l, 1), loser))
+    conn.execute('UPDATE players SET elo = ?, n_games_played = n_games_played + 1 WHERE player_name = ?', (max(new_R_w), winner))
+    conn.execute('UPDATE players SET elo = ?, n_games_played = n_games_played + 1 WHERE player_name = ?', (max(new_R_l), loser))
     conn.commit()
     conn.close()
 
+def show_alert(message):
+    set_props("alert", dict(is_open=True, children=message))
+    return no_update
+
 # Layout de l'application
 app.layout = dbc.Container([
+    dbc.Alert(id="alert", is_open=False, duration=2000, color="danger", style={"position": "absolute", "top": "0px", "z-index": 9999, "width": "98vw"}),
+    html.H1("ELO babyfoot"),
     dbc.Row([
         dbc.Col([
             html.Label("Joueur 1"),
@@ -86,9 +90,8 @@ app.layout = dbc.Container([
     dbc.Row([
         dash_table.DataTable(id='players-table', 
                         columns=[{"name": col, "id": col} for col in ["player_name", "elo", "n_games_played"]], 
-                        data=[], style_table={"margin-top": "50px"}, sort_action="native", sort_mode="single",
-),
-    ])
+                        data=[], style_table={"margin-top": "50px"}, sort_action="native", sort_mode="single"),
+    ]),
 ], fluid=True)
 
 
@@ -116,7 +119,10 @@ def update_dropdowns(_):
     prevent_initial_call=True
 )
 def add_player(n_clicks, new_player_name):
-    if n_clicks > 0 and new_player_name:
+    if n_clicks > 0:
+        if not new_player_name:
+            return show_alert("Veuillez entrer un nom de joueur.")
+            
         conn = get_db_connection()
         conn.execute('INSERT INTO players (player_name, elo, n_games_played) VALUES (?, ?, ?)', 
                         (new_player_name, 800, 0))
@@ -141,17 +147,23 @@ def add_player(n_clicks, new_player_name):
     prevent_initial_call=True
 )
 def update_scores(n_clicks, player1, player2, score1, score2):
-    if n_clicks > 0 and player1 and player2 and score1 is not None and score2 is not None:
+    if n_clicks > 0:
+        if player1 == player2:
+            return show_alert("Les deux joueurs doivent être différents.") 
+        if not player1 or not player2:
+            return show_alert("Veuillez sélectionner deux joueurs.")
+        if score1 is None or score2 is None:
+            return show_alert("Veuillez entrer deux scores.")
         # Validation des scores
         if score1 < 0 or score2 < 0 or score1 > 10 or score2 > 10:
-            return [{"message": "Les scores doivent être entre 0 et 10."}]
+            return show_alert("Les scores doivent être entre 0 et 10.")
         
         if score1 == 10 and score2 < 10:
             calculate_elo(player1, player2, score1, score2)
         elif score2 == 10 and score1 < 10:
             calculate_elo(player2, player1, score2, score1)
         else:
-            return [{"message": "Un des joueurs doit avoir un score de 10."}]
+            return show_alert("Un des joueurs doit avoir un score de 10.")
     
     # Rafraîchir les données pour afficher le tableau
     conn = get_db_connection()
