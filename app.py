@@ -204,5 +204,5 @@ def update_scores(n_clicks, player1, player2, score1, score2):
 server = app.server
 
 if __name__ == '__main__':
-    DB = "test.sqlite"
-    app.run(debug=True)
+    DB = "db.sqlite"
+    app.run(debug=(False if DB == "db.sqlite" else True))
