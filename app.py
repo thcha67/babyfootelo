@@ -186,4 +186,4 @@ def add_player(_, new_player_name):
 server = app.server
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=False)
