@@ -9,6 +9,8 @@ SHEET_URL = "https://docs.google.com/spreadsheets/d/1ZAHNcvfIhZX6mg0v8THsSA71gsS
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 CREDS_FILE = "credentials.json"
 
+
+
 def get_google_sheet():
     creds = ServiceAccountCredentials.from_json_keyfile_name(CREDS_FILE, SCOPES)
     client = gspread.authorize(creds)
