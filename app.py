@@ -10,7 +10,6 @@ SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 CREDS_FILE = "credentials.json"
 
 
-
 def get_google_sheet():
     creds = ServiceAccountCredentials.from_json_keyfile_name(CREDS_FILE, SCOPES)
     client = gspread.authorize(creds)
@@ -68,13 +67,22 @@ def calculate_elo(winner, loser, score_w, score_l):
     update_google_sheet(df)
 
 def create_table(df):
-    return df.sort_values(by='elo', ascending=False).to_dict('records')
+    table = df.sort_values(by='elo', ascending=False).to_dict('records')
+    table_style = [ # Highlight top 3 players
+        {"if": {"filter_query": f'{{player_name}} eq "{table[i]["player_name"]}"', "column_id": "player_name"}, "backgroundColor": c}
+        for i, c in zip([0, 1, 2], ["#FFD700", "#C0C0C0", "#cd7f32"])
+        ]
+    return table, table_style
 
 def show_alert(message, color="danger"):
     set_props("alert", dict(is_open=True, children=message, color=color))
     return no_update
 
-app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+app = Dash("ELO babyfoot GPH", external_stylesheets=[dbc.themes.BOOTSTRAP])
+app.title = "ELO babyfoot GPH"
+
+server = app.server
+
 app.layout = dbc.Container([
     dbc.Alert(id="alert", is_open=False, duration=2000, color="danger", style={"position": "absolute", "top": "0px", "z-index": 9999, "width": "98vw"}),
     html.H1("ELO babyfoot GPH", style={"textAlign": "center", "margin-bottom": "10px"}),
@@ -99,22 +107,24 @@ app.layout = dbc.Container([
         ], width=4)
     ]),
     dbc.Row([
-        dash_table.DataTable(id='players-table', 
-                        columns=[{"name": col, "id": col} for col in ["player_name", "elo", "n_games_played"]], 
-                        data=[], style_table={"margin-top": "50px", "overflowY": "auto", "height": "55vh"}, 
-                        sort_action="native", sort_mode="single", fixed_rows={'headers': True},
-                        style_header={'backgroundColor': 'var(--bs-blue)', 'color': 'white', 'fontWeight': 'bold'},
-                        style_cell={'width': '33%','textOverflow': 'ellipsis','overflow': 'hidden', 'textAlign': 'center'}),
+        dash_table.DataTable(
+            id='players-table', 
+            columns=[{"name": col, "id": col} for col in ["player_name", "elo", "n_games_played"]], 
+            data=[], style_table={"margin-top": "50px", "overflowY": "auto", "height": "55vh"}, 
+            sort_action="native", sort_mode="single", fixed_rows={'headers': True},
+            style_header={'backgroundColor': 'var(--bs-blue)', 'color': 'white', 'fontWeight': 'bold'},
+            style_cell={'width': '33%','textOverflow': 'ellipsis','overflow': 'hidden', 'textAlign': 'center'},
+        ),
     ]),
 ], fluid=True)
 
 @app.callback(
     Output('players-table', 'data'),
+    Output('players-table', 'style_data_conditional'),
     Input('players-table', 'id')
 )
 def update_table_on_load(_):
-    df = get_data()
-    return create_table(df)
+    return create_table(get_data())
 
 @app.callback(
     Output('player1-dropdown', 'options'),
@@ -127,6 +137,7 @@ def update_dropdowns(data):
 
 @app.callback(
     Output('players-table', 'data', allow_duplicate=True),
+    Output("players-table", "style_data_conditional", allow_duplicate=True),
     Output("player1-dropdown", "value"),
     Output("player2-dropdown", "value"),
     Output("score-input-player1", "value"),
@@ -152,14 +163,14 @@ def update_scores(_, player1, player2, score1, score2):
             calculate_elo(player1, player2, score1, score2)
         else:
             calculate_elo(player2, player1, score2, score1)
-        df = get_data()
         show_alert(f"Les scores ont été mis à jour.", color="success")
-        return create_table(df), None, None, None, None
+        return *create_table(get_data()), None, None, None, None
     
-    return no_update, no_update, no_update, no_update, no_update
+    return no_update, no_update, no_update, no_update, no_update, no_update, no_update
 
 @app.callback(
     Output('players-table', 'data', allow_duplicate=True),
+    Output("players-table", "style_data_conditional", allow_duplicate=True),
     Output("new-player-name", "value"),
     Input('add-player-btn', 'n_clicks'),
     State('new-player-name', 'value'),
@@ -168,22 +179,20 @@ def update_scores(_, player1, player2, score1, score2):
 def add_player(_, new_player_name):
     if not new_player_name:
         show_alert("Veuillez entrer un nom de joueur.")
-        return no_update, no_update
+        return no_update, no_update, no_update
     
     df = get_data()
 
     if new_player_name in df['player_name'].values:
         show_alert("Ce joueur existe déjà.")
-        return no_update, no_update
+        return no_update, no_update, no_update
 
     new_row = pd.DataFrame([[new_player_name, 800, 0]], columns=['player_name', 'elo', 'n_games_played'])
     df = pd.concat([df, new_row], ignore_index=True)
     update_google_sheet(df)
     show_alert(f"Le joueur {new_player_name} a été ajouté.", color="success")
-    return create_table(df), None
+    return *create_table(df), None
 
-
-server = app.server
 
 if __name__ == '__main__':
     app.run(debug=False)
