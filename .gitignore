@@ -1,2 +1,4 @@
 /.venv
 test.sqlite
+db.sqlite
+sqlite_app.py
