@@ -22,7 +22,6 @@ def get_google_sheet(sheet_name):
 
 def get_data(sheet_name):
     sheet = get_google_sheet(sheet_name=sheet_name)
-    print(sheet)
     data = sheet.get_all_records()
     return pd.DataFrame(data)
 
@@ -216,7 +215,7 @@ def show_player_stats(active_cell, data):
     player_name = data[active_cell["row"]]["player_name"]
     
     match_history = get_data("match_history")
-
+    
     if match_history.empty:
         return True, "Aucun match enregistré."
     
