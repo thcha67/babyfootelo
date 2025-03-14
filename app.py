@@ -11,7 +11,6 @@ from datetime import datetime
 # Configurer l'accès à Google Sheets
 TEST = False
 SHEET_URL = "https://docs.google.com/spreadsheets/d/1ZAHNcvfIhZX6mg0v8THsSA71gsSceSbN2CfQtcYjBrM/edit?gid=0#gid=0" if not TEST else "https://docs.google.com/spreadsheets/d/1YGxgv7Q-GdLtDkUv881KeUKRCSxS4vLXv1swncRtt4M/edit"
-SHEET_URL = "https://docs.google.com/spreadsheets/d/1YGxgv7Q-GdLtDkUv881KeUKRCSxS4vLXv1swncRtt4M/edit"
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 CREDS_FILE = "credentials.json"
 
