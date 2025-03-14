@@ -1,5 +1,6 @@
 /.venv
 test.sqlite
 db.sqlite
+test_sheets.py
 sqlite_app.py
 credentials.json
