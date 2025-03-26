@@ -258,10 +258,10 @@ def add_player(_, new_player_name):
         show_alert("Ce joueur existe déjà.")
         return no_update, no_update, no_update
 
-    new_player = pd.DataFrame([[new_player_name, 800, 0, "0-0"]], columns=['player_name', 'elo', 'n_games_played', "record"])
+    new_player = pd.DataFrame([[new_player_name, 800, 0, "0-0", "0"]], columns=['player_name', 'elo', 'n_games_played', "record", "win_streak"])
     players = pd.concat([players, new_player], ignore_index=True)
 
-    update_google_sheet(players)
+    update_google_sheet(players, "players")
     show_alert(f"Le joueur {new_player_name} a été ajouté.", color="success")
     return *create_table(players), None
 
