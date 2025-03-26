@@ -4,7 +4,7 @@ from dash.exceptions import PreventUpdate
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import pandas as pd
-import numpy as np
+import pytz
 import plotly.graph_objects as go
 from datetime import datetime
 
@@ -13,6 +13,8 @@ TEST = False
 SHEET_URL = "https://docs.google.com/spreadsheets/d/1ZAHNcvfIhZX6mg0v8THsSA71gsSceSbN2CfQtcYjBrM/edit?gid=0#gid=0" if not TEST else "https://docs.google.com/spreadsheets/d/1YGxgv7Q-GdLtDkUv881KeUKRCSxS4vLXv1swncRtt4M/edit"
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 CREDS_FILE = "credentials.json"
+
+TZ = pytz.timezone("America/Toronto")
 
 
 def get_google_sheet(sheet_name):
@@ -73,7 +75,7 @@ def record_match(winner, loser, score_w, score_l, elo_w, elo_l):
     df = get_data("match_history")
 
     # Générer l'ID du match (date du match)
-    match_id = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    match_id = datetime.now(TZ).strftime("%Y-%m-%d %H:%M:%S")
 
     # Ajoute une nouvelle ligne à la feuille match_history
     match_data = [match_id, winner, loser, score_w, score_l, elo_w, elo_l]
