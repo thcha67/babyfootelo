@@ -232,11 +232,11 @@ def show_player_stats(active_cell, data):
 
     dates, elo, opponents, win_or_loss, scores = zip(*sorted(zip(dates, elo, opponents, win_or_loss, scores), key=lambda x: x[0]))
 
-    hovertext = [f"{w_l} contre {opponent} (10-{score})" for score, w_l, opponent in zip(scores, win_or_loss, opponents)]
+    hovertext = [f"{date}<br>{w_l} contre {opponent} (10-{score})" for date, score, w_l, opponent in zip(dates, scores, win_or_loss, opponents)]
 
     figure = go.Figure()
-    figure.add_trace(go.Scatter(x=dates, y=elo, mode='lines+markers', name='ELO', line=dict(color='blue'), hovertext=hovertext))
-    figure.update_layout(title=f"Évolution de l'ELO de {player_name}", xaxis_title="Date", yaxis_title="ELO", template="plotly_white")
+    figure.add_trace(go.Scatter(x=list(range(len(elo))), y=elo, mode='lines+markers', name='ELO', line=dict(color='blue'), hovertext=hovertext))
+    figure.update_layout(title=f"Évolution de l'ELO de {player_name}", xaxis_title="Nombre de parties", yaxis_title="ELO", template="plotly_white")
 
     return True, dcc.Graph(figure=figure)
 
