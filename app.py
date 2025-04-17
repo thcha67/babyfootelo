@@ -71,17 +71,17 @@ def calculate_elo(winner, loser, score_w, score_l):
     return df
 
 
-def record_match(winner, loser, score_w, score_l, elo_w, elo_l):
+def record_match(winner, loser, score_w, score_l, elo_w, elo_l, color_w):
     df = get_data("match_history")
 
     # Générer l'ID du match (date du match)
     match_id = datetime.now(TZ).strftime("%Y-%m-%d %H:%M:%S")
 
     # Ajoute une nouvelle ligne à la feuille match_history
-    match_data = [match_id, winner, loser, score_w, score_l, elo_w, elo_l]
+    match_data = [match_id, winner, loser, score_w, score_l, elo_w, elo_l, color_w]
     # append match data to df
     if len(df) == 0:
-        df = pd.DataFrame([match_data], columns=["id", "winner", "loser", "score_w", "score_l", "elo_w", "elo_l"])
+        df = pd.DataFrame([match_data], columns=["id", "winner", "loser", "score_w", "score_l", "elo_w", "elo_l", "color_w"])
     else:
         df.loc[len(df)] = match_data
 
@@ -110,17 +110,17 @@ app.layout = dbc.Container([
     html.H1("ELO babyfoot GPH", style={"textAlign": "center", "margin-bottom": "10px"}),
     dbc.Row([
         dbc.Col([
-            html.Label("Joueur 1"),
-            dcc.Dropdown(id='player1-dropdown', options=[]),
-            html.Label("Joueur 2"),
-            dcc.Dropdown(id='player2-dropdown', options=[]),
+            html.Label("Joueur rouge"),
+            dcc.Dropdown(id='player_red_dropdown', options=[], style={"backgroundColor": "#DC143C"}),
+            html.Label("Joueur bleu"),
+            dcc.Dropdown(id='player_blue_dropdown', options=[], style={"backgroundColor": "#1E90FF"}),
         ], width=4),
         dbc.Col([
-            html.Label("Score 1"),
-            dbc.Input(id='score-input-player1', type='number', placeholder="Score du joueur 1", min=0, max=10, inputmode="numeric", maxlength=2),
-            html.Label("Score 2"),
-            dbc.Input(id='score-input-player2', type='number', placeholder="Score du joueur 2", min=0, max=10, inputmode="numeric", maxlength=2),
-            dbc.Button("Confirmer", id='confirm-btn', n_clicks=0),
+            html.Label("Score rouge"),
+            dbc.Input(id='score_input_player_red', type='number', placeholder="Score", min=0, max=10, inputmode="numeric", maxlength=2),
+            html.Label("Score bleu"),
+            dbc.Input(id='score_input_player_blue', type='number', placeholder="Score", min=0, max=10, inputmode="numeric", maxlength=2),
+            dbc.Button("Confirmer", id='confirm_btn', n_clicks=0),
         ], width=4),
         dbc.Col([
             html.Label("Ajouter un joueur (max. 15 caractères)"),
@@ -130,7 +130,7 @@ app.layout = dbc.Container([
     ]),
     dbc.Row([
         dash_table.DataTable(
-            id='players-table', 
+            id='players_table', 
             columns=[{"name": col, "id": col} for col in ["player_name", "elo", "n_games_played", "record", "win_streak"]], 
             data=[], style_table={"margin-top": "50px", "overflowY": "auto", "height": "55vh"}, 
             sort_action="native", sort_mode="single", fixed_rows={'headers': True},
@@ -145,57 +145,57 @@ app.layout = dbc.Container([
 ], fluid=True)
 
 @app.callback(
-    Output('players-table', 'data'),
-    Output('players-table', 'style_data_conditional'),
-    Input('players-table', 'id')
+    Output('players_table', 'data'),
+    Output('players_table', 'style_data_conditional'),
+    Input('players_table', 'id')
 )
 def update_table_on_load(_):
     return create_table(get_data("players"))
 
 @app.callback(
-    Output('player1-dropdown', 'options'),
-    Output('player2-dropdown', 'options'),
-    Input('players-table', 'data'),
+    Output('player_red_dropdown', 'options'),
+    Output('player_blue_dropdown', 'options'),
+    Input('players_table', 'data'),
 )
 def update_dropdowns(data):
     player_names = [player["player_name"] for player in data]
     return player_names, player_names
 
 @app.callback(
-    Output('players-table', 'data', allow_duplicate=True),
-    Output("players-table", "style_data_conditional", allow_duplicate=True),
-    Output("player1-dropdown", "value"),
-    Output("player2-dropdown", "value"),
-    Output("score-input-player1", "value"),
-    Output("score-input-player2", "value"),
-    Input('confirm-btn', 'n_clicks'),
-    State('player1-dropdown', 'value'),
-    State('player2-dropdown', 'value'),
-    State('score-input-player1', 'value'),
-    State('score-input-player2', 'value'),
-    prevent_initial_call=True
+    Output('players_table', 'data', allow_duplicate=True),
+    Output("players_table", "style_data_conditional", allow_duplicate=True),
+    Output("player_red_dropdown", "value"),
+    Output("player_blue_dropdown", "value"),
+    Output("score_input_player_red", "value"),
+    Output("score_input_player_blue", "value"),
+    Input('confirm_btn', 'n_clicks'),
+    State('player_red_dropdown', 'value'),
+    State('player_blue_dropdown', 'value'),
+    State('score_input_player_red', 'value'),
+    State('score_input_player_blue', 'value'),
+    prevent_initial_call=True,
 )
-def update_scores(_, player1, player2, score1, score2):
-    if not player1 or not player2:
+def update_scores(_, player_red, player_blue, score_red, score_blue):
+    if not player_red or not player_blue:
         show_alert("Veuillez sélectionner deux joueurs.")
-    elif player1 == player2:
+    elif player_red == player_blue:
         show_alert("Veuillez sélectionner deux joueurs différents.")
-    elif score1 is None or score2 is None:
+    elif score_red is None or score_blue is None:
         show_alert("Veuillez entrer les scores.")
-    elif max(score1, score2) != 10 or min(score1, score2) < 0:
+    elif max(score_red, score_blue) != 10 or min(score_red, score_blue) < 0:
         show_alert("Les scores doivent être compris entre 0 et 10.")
     else:
-        if score1 == 10: # player1 wins
-            players = calculate_elo(player1, player2, score1, score2)
-            winner, loser, score_w, score_l = player1, player2, score1, score2
+        if score_red == 10: # player red wins
+            players = calculate_elo(player_red, player_blue, score_red, score_blue)
+            winner, loser, score_w, score_l, color_w = player_red, player_blue, score_red, score_blue, "red"
         else: 
-            players = calculate_elo(player2, player1, score2, score1)
-            winner, loser, score_w, score_l = player2, player1, score2, score1
+            players = calculate_elo(player_blue, player_red, score_blue, score_red)
+            winner, loser, score_w, score_l, color_w = player_blue, player_red, score_blue, score_red, "blue"
 
         new_elo_winner = players[players["player_name"] == winner]["elo"].values[0]
         new_elo_loser = players[players["player_name"] == loser]["elo"].values[0]
 
-        match_history = record_match(winner, loser, score_w, score_l, new_elo_winner, new_elo_loser)
+        match_history = record_match(winner, loser, score_w, score_l, new_elo_winner, new_elo_loser, color_w)
 
         update_google_sheet(players, "players")
         update_google_sheet(match_history, "match_history")
@@ -207,8 +207,8 @@ def update_scores(_, player1, player2, score1, score2):
 @app.callback(
     Output("player-stats", "is_open"),
     Output("player-stats-content", "children"),
-    Input("players-table", "active_cell"),
-    State("players-table", "data"),
+    Input("players_table", "active_cell"),
+    State("players_table", "data"),
 )
 def show_player_stats(active_cell, data):
     if not active_cell:
@@ -242,8 +242,8 @@ def show_player_stats(active_cell, data):
 
 
 @app.callback(
-    Output('players-table', 'data', allow_duplicate=True),
-    Output("players-table", "style_data_conditional", allow_duplicate=True),
+    Output('players_table', 'data', allow_duplicate=True),
+    Output("players_table", "style_data_conditional", allow_duplicate=True),
     Output("new-player-name", "value"),
     Input('add-player-btn', 'n_clicks'),
     State('new-player-name', 'value'),
