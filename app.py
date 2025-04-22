@@ -111,9 +111,9 @@ app.layout = dbc.Container([
     dbc.Row([
         dbc.Col([
             html.Label("Joueur rouge"),
-            dcc.Dropdown(id='player_red_dropdown', options=[], style={"backgroundColor": "#DC143C"}),
+            dcc.Dropdown(id='player_red_dropdown', options=[], style={"backgroundColor": "#DC143C"}, optionHeight=45),
             html.Label("Joueur bleu"),
-            dcc.Dropdown(id='player_blue_dropdown', options=[], style={"backgroundColor": "#1E90FF"}),
+            dcc.Dropdown(id='player_blue_dropdown', options=[], style={"backgroundColor": "#1E90FF"}, optionHeight=45),
         ], width=4),
         dbc.Col([
             html.Label("Score rouge"),
@@ -123,8 +123,8 @@ app.layout = dbc.Container([
             dbc.Button("Confirmer", id='confirm_btn', n_clicks=0),
         ], width=4),
         dbc.Col([
-            html.Label("Ajouter un joueur (max. 15 caractères)"),
-            dbc.Input(id='new-player-name', type='text', placeholder="Nom du joueur", maxlength=15),
+            html.Label("Ajouter un joueur"),
+            dbc.Input(id='new-player-name', type='text', placeholder="Nom", maxlength=40),
             dbc.Button("Ajouter le joueur", id='add-player-btn', n_clicks=0),
         ], width=4)
     ]),
