@@ -111,9 +111,9 @@ app.layout = dbc.Container([
     dbc.Row([
         dbc.Col([
             html.Label("Joueur rouge"),
-            dcc.Dropdown(id='player_red_dropdown', options=[], style={"backgroundColor": "#DC143C"}, optionHeight=45),
+            dcc.Dropdown(id='player_red_dropdown', options=[], style={"backgroundColor": "#DC143C"}, optionHeight=55),
             html.Label("Joueur bleu"),
-            dcc.Dropdown(id='player_blue_dropdown', options=[], style={"backgroundColor": "#1E90FF"}, optionHeight=45),
+            dcc.Dropdown(id='player_blue_dropdown', options=[], style={"backgroundColor": "#1E90FF"}, optionHeight=55),
         ], width=4),
         dbc.Col([
             html.Label("Score rouge"),
